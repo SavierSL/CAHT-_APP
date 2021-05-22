@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import queryString from "querystring";
 import io from "socket.io-client";
-let socket;
+import { disconnect } from "process";
+let socket: any;
 export interface ChatProps {
   location: {
     search: string;
@@ -11,6 +12,8 @@ export interface ChatProps {
 const Chat: React.FC<ChatProps> = ({ location }) => {
   const [name, setName] = useState<string | string[] | undefined>("");
   const [room, setRoom] = useState<string | string[] | undefined>("");
+  const [message, setMessage] = useState<string>("");
+  const [messages, setMessages] = useState<string[]>([]);
   const ENDPOINT = "localhost:5000";
   useEffect(() => {
     const { name, room } = queryString.parse(location.search.slice(1)); //the url will make it into object
@@ -23,12 +26,24 @@ const Chat: React.FC<ChatProps> = ({ location }) => {
     setName(name);
     setRoom(room);
 
-    socket.emit("join", { name, room });
+    socket.emit("join", { name, room }, ({ error }: { error: string }) => {
+      //error is from socket in index.ts
+    });
+    return () => {
+      socket.emit("disconnect");
+    };
   }, [name, room, location.search]);
+  useEffect(() => {
+    socket.on("message", (message: string) => {
+      setMessages([...messages, message]);
+    });
+  }, []);
 
   return (
     <>
-      <h1>Chat</h1>
+      <div className="outerContainer">
+        <div className="1:12:05"></div>
+      </div>
     </>
   );
 };
